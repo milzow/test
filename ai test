@@ -1,0 +1,41 @@
+import requests
+import json
+import sqlite3
+from datetime import datetime
+
+# API URL for weather information
+url = "http://api.openweathermap.org/data/2.5/weather?q=Seoul&appid=API_KEY"
+
+# Requesting weather information from API
+response = requests.get(url)
+
+# Parsing JSON data from API response
+data = json.loads(response.text)
+
+# Extracting required weather information from parsed data
+city = data['name']
+temperature = data['main']['temp']
+humidity = data['main']['humidity']
+pressure = data['main']['pressure']
+wind_speed = data['wind']['speed']
+sunrise = datetime.fromtimestamp(data['sys']['sunrise'])
+sunset = datetime.fromtimestamp(data['sys']['sunset'])
+
+# Connecting to SQLite database
+conn = sqlite3.connect('weather.db')
+
+# Creating a cursor object
+cursor = conn.cursor()
+
+# Creating a table to store weather information
+cursor.execute('''CREATE TABLE IF NOT EXISTS weather
+                (city TEXT, temperature REAL, humidity INTEGER, pressure INTEGER, wind_speed REAL, sunrise TEXT, sunset TEXT)''')
+
+# Inserting weather information into the table
+cursor.execute("INSERT INTO weather VALUES (?, ?, ?, ?, ?, ?, ?)", (city, temperature, humidity, pressure, wind_speed, sunrise, sunset))
+
+# Committing the changes to the database
+conn.commit()
+
+# Closing the database connection
+conn.close()
